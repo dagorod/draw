@@ -51,9 +51,12 @@ class DrawingSystem {
 
     getMousePos(e) {
         const rect = this.canvas.getBoundingClientRect();
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+        
         return new Vector2(
-            e.clientX - rect.left,
-            e.clientY - rect.top
+            (e.clientX - rect.left) * scaleX,
+            (e.clientY - rect.top) * scaleY
         );
     }
 

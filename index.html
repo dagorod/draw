@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>Draw & Escape - Platform Drawing Game</title>
     <style>
         * {
@@ -15,18 +18,26 @@
             background: #1a1a2e;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
             align-items: center;
             min-height: 100vh;
             font-family: 'Arial', sans-serif;
             overflow: hidden;
             position: relative;
+            padding: 10px 5px;
+            /* Safe area padding for notched phones */
+            padding-top: max(10px, env(safe-area-inset-top));
+            padding-bottom: max(5px, env(safe-area-inset-bottom));
+            padding-left: max(5px, env(safe-area-inset-left));
+            padding-right: max(5px, env(safe-area-inset-right));
         }
         
         h1 {
             color: #00ff88;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             text-shadow: 0 0 10px #00ff88;
+            font-size: clamp(1.2rem, 4vw, 2rem);
+            text-align: center;
         }
         
         #gameCanvas {
@@ -34,19 +45,27 @@
             background: linear-gradient(to bottom, #0f3460 0%, #16213e 100%);
             cursor: crosshair;
             border-radius: 8px;
+            width: 100%;
+            max-width: min(90vw, 50vh);
+            height: auto;
+            aspect-ratio: 9/16;
+            touch-action: none;
         }
         
         #gameInfo {
             color: #eee;
-            margin: 20px 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            min-width: 800px;
-            gap: 20px;
-        }
-        
-        #inkBar {
+            margin: 10px 0;
+            text-align: center;
+            background: rgba(22, 33, 62, 0.8);
+            padding: 8px 15px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            font-size: clamp(0.8rem, 3vw, 1rem);
+            width: 100%;
+            max-width: min(90vw, 50vh);
+            box-sizing: border-box;
+        }        #inkBar {
             display: flex;
             align-items: center;
             gap: 10px;
@@ -108,36 +127,144 @@
         /* Mobile Controls Styling */
         #mobileControls {
             position: fixed;
-            bottom: 20px;
+            bottom: 10px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 10px;
+            gap: 8px;
             flex-wrap: wrap;
             justify-content: center;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 15px;
-            border-radius: 10px;
-            backdrop-filter: blur(5px);
+            background: rgba(22, 33, 62, 0.95);
+            padding: 10px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            max-width: min(90vw, 50vh);
+            box-sizing: border-box;
         }
         
         #mobileControls button {
-            background: #007acc;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 12px 16px;
-            font-size: 14px;
+            background: linear-gradient(145deg, #16213e, #0f3460);
+            color: #00ff88;
+            border: 2px solid #00ff88;
+            border-radius: 10px;
+            padding: 8px 12px;
+            font-size: clamp(0.7rem, 3vw, 0.9rem);
             font-weight: bold;
             cursor: pointer;
             user-select: none;
-            min-width: 50px;
-            min-height: 50px;
+            min-width: 45px;
+            min-height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            touch-action: manipulation;
         }
         
         #mobileControls button:active {
-            background: #005a9e;
+            background: linear-gradient(145deg, #0f3460, #16213e);
             transform: scale(0.95);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Hide mobile controls on desktop */
+        @media (min-width: 769px) {
+            #mobileControls {
+                display: none !important;
+            }
+        }
+        
+        /* Adjust game layout for mobile portrait */
+        @media (max-width: 768px) and (orientation: portrait) {
+            body {
+                padding: 0;
+                margin: 0;
+                min-height: 100vh;
+                min-height: 100dvh; /* Dynamic viewport height for mobile */
+                justify-content: center;
+                background: #1a1a2e;
+                overflow: hidden;
+            }
+            
+            h1 {
+                display: none; /* Hide title on mobile for fullscreen */
+            }
+            
+            #gameInfo {
+                position: absolute;
+                top: 10px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: auto;
+                margin: 0;
+                padding: 6px 12px;
+                font-size: 0.8rem;
+                background: rgba(22, 33, 62, 0.7);
+                z-index: 10;
+            }
+            
+            #gameCanvas {
+                width: 100vw;
+                height: 100vh;
+                height: 100dvh; /* Dynamic viewport height */
+                max-width: none;
+                aspect-ratio: 9/16;
+                object-fit: contain;
+                border: none;
+                border-radius: 0;
+            }
+            
+            #mobileControls {
+                position: fixed;
+                bottom: max(10px, env(safe-area-inset-bottom, 10px));
+                left: max(10px, env(safe-area-inset-left, 10px));
+                transform: none;
+                background: rgba(22, 33, 62, 0.85);
+                backdrop-filter: blur(8px);
+                border: 1px solid rgba(0, 255, 136, 0.4);
+                border-radius: 12px;
+                padding: 6px;
+                display: flex;
+                flex-direction: column;
+                gap: 3px;
+                width: 140px;
+                max-width: none;
+                z-index: 20;
+                opacity: 0.8;
+                transition: opacity 0.3s ease;
+            }
+            
+            .control-row {
+                display: flex;
+                gap: 3px;
+                justify-content: center;
+            }
+            
+            #mobileControls button {
+                width: 40px;
+                height: 40px;
+                padding: 0;
+                background: linear-gradient(145deg, #16213e, #0f3460);
+                border: 1px solid rgba(0, 255, 136, 0.5);
+                border-radius: 8px;
+                font-size: 12px;
+                font-weight: bold;
+                color: #00ff88;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                transition: all 0.15s ease;
+                flex-shrink: 0;
+            }
+            
+            #mobileControls button:active {
+                background: linear-gradient(145deg, #0f3460, #16213e);
+                transform: scale(0.9);
+                box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+                border-color: #00ff88;
+            }
         }
         
         #jump {
@@ -151,7 +278,7 @@
 </head>
 <body>
     <h1>🎨 Draw & Escape</h1>
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <canvas id="gameCanvas" width="450" height="800"></canvas>
     <div id="gameInfo">
         <div id="inkBar">
             <div>Ink Remaining</div>
@@ -171,13 +298,21 @@
 
     <!-- Simple Mobile Controls (hidden by default) -->
     <div id="mobileControls" style="display: none;">
-        <button id="moveLeft">◀️</button>
-        <button id="moveUp">🔺</button>
-        <button id="moveRight">▶️</button>
-        <button id="jump">JUMP</button>
-        <button id="pause">⏸️</button>
-        <button id="clear">🗑️</button>
-        <button id="restart">🔄</button>
+        <div class="control-row">
+            <button id="pause">⏸</button>
+            <button id="moveUp">↑</button>
+            <button id="clear">✖</button>
+        </div>
+        <div class="control-row">
+            <button id="moveLeft">←</button>
+            <button id="jump">⬆</button>
+            <button id="moveRight">→</button>
+        </div>
+        <div class="control-row">
+            <button style="visibility: hidden;"></button>
+            <button id="restart">↻</button>
+            <button style="visibility: hidden;"></button>
+        </div>
     </div>
 
     <!-- Game Scripts -->
