@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Draw & Escape - Platform Drawing Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #1a1a2e;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        h1 {
+            color: #00ff88;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #00ff88;
+        }
+        
+        #gameCanvas {
+            border: 3px solid #16213e;
+            background: linear-gradient(to bottom, #0f3460 0%, #16213e 100%);
+            cursor: crosshair;
+            border-radius: 8px;
+        }
+        
+        #gameInfo {
+            color: #eee;
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-width: 800px;
+            gap: 20px;
+        }
+        
+        #inkBar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        #inkBarContainer {
+            width: 200px;
+            height: 20px;
+            border: 2px solid #333;
+            border-radius: 10px;
+            background: #111;
+            overflow: hidden;
+        }
+        
+        #inkBarFill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00cc66);
+            transition: width 0.3s ease;
+        }
+        
+        .controls {
+            color: #aaa;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 12px;
+            max-width: 800px;
+        }
+        
+        /* Simple mobile responsive adjustments */
+        @media (max-width: 768px) {
+            #gameCanvas {
+                width: 95vw;
+                height: auto;
+                max-width: 100%;
+            }
+            
+            #gameInfo {
+                min-width: auto;
+                width: 95vw;
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .controls {
+                font-size: 10px;
+                margin: 10px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 10px;
+            }
+            
+            #mobileControls {
+                display: flex !important;
+            }
+        }
+        
+        /* Mobile Controls Styling */
+        #mobileControls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+        }
+        
+        #mobileControls button {
+            background: #007acc;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            min-width: 50px;
+            min-height: 50px;
+        }
+        
+        #mobileControls button:active {
+            background: #005a9e;
+            transform: scale(0.95);
+        }
+        
+        #jump {
+            background: #28a745;
+        }
+        
+        #jump:active {
+            background: #1e7e34;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 Draw & Escape</h1>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="gameInfo">
+        <div id="inkBar">
+            <div>Ink Remaining</div>
+            <div id="inkBarContainer">
+                <div id="inkBarFill" style="width: 100%;"></div>
+            </div>
+        </div>
+        <div>
+            <div id="levelDisplay">Level 1: First Steps</div>
+            <div id="levelDescription">Learn to draw and jump</div>
+        </div>
+    </div>
+    <div class="controls">
+        🖱️ Click and drag to draw platforms | ⌨️ WASD to move | 🚪 Reach the door to advance!<br>
+        <small>P=Pause | C=Clear platforms | R=Restart level | Don't fall off the bottom!</small>
+    </div>
+
+    <!-- Simple Mobile Controls (hidden by default) -->
+    <div id="mobileControls" style="display: none;">
+        <button id="moveLeft">◀️</button>
+        <button id="moveUp">🔺</button>
+        <button id="moveRight">▶️</button>
+        <button id="jump">JUMP</button>
+        <button id="pause">⏸️</button>
+        <button id="clear">🗑️</button>
+        <button id="restart">🔄</button>
+    </div>
+
+    <!-- Game Scripts -->
+    <script src="src/core/Vector2.js"></script>
+    <script src="src/core/GameObject.js"></script>
+    <script src="src/core/Input.js"></script>
+    <script src="src/core/DrawingSystem.js"></script>
+    <script src="src/core/LevelManager.js"></script>
+    <script src="src/core/GameEngine.js"></script>
+    <script src="src/entities/Player.js"></script>
+    <script src="src/entities/DrawnPlatform.js"></script>
+    <script src="src/entities/Door.js"></script>
+    <script src="src/entities/Wall.js"></script>
+    <script src="src/entities/Spike.js"></script>
+    <script src="src/entities/MovingPlatform.js"></script>
+    <script src="src/Game.js"></script>
+    <script src="src/main.js"></script>
+    
+    <script>
+        // Simple Mobile Controls
+        document.addEventListener('DOMContentLoaded', function() {
+            const buttons = {
+                moveLeft: 'KeyA',
+                moveUp: 'KeyW', 
+                moveRight: 'KeyD',
+                jump: 'Space',
+                pause: 'KeyP',
+                clear: 'KeyC',
+                restart: 'KeyR'
+            };
+            
+            // Add touch event listeners to mobile buttons
+            Object.keys(buttons).forEach(buttonId => {
+                const button = document.getElementById(buttonId);
+                if (button) {
+                    const keyCode = buttons[buttonId];
+                    
+                    // Touch start - simulate key down
+                    button.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        const event = new KeyboardEvent('keydown', { code: keyCode, bubbles: true });
+                        document.dispatchEvent(event);
+                    });
+                    
+                    // Touch end - simulate key up  
+                    button.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        const event = new KeyboardEvent('keyup', { code: keyCode, bubbles: true });
+                        document.dispatchEvent(event);
+                    });
+                    
+                    // Also handle mouse events for testing
+                    button.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        const event = new KeyboardEvent('keydown', { code: keyCode, bubbles: true });
+                        document.dispatchEvent(event);
+                    });
+                    
+                    button.addEventListener('mouseup', (e) => {
+                        e.preventDefault();
+                        const event = new KeyboardEvent('keyup', { code: keyCode, bubbles: true });
+                        document.dispatchEvent(event);
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
