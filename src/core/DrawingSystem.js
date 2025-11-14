@@ -51,13 +51,29 @@ class DrawingSystem {
 
     getMousePos(e) {
         const rect = this.canvas.getBoundingClientRect();
-        const scaleX = this.canvas.width / rect.width;
-        const scaleY = this.canvas.height / rect.height;
         
-        return new Vector2(
-            (e.clientX - rect.left) * scaleX,
-            (e.clientY - rect.top) * scaleY
-        );
+        // Get the actual displayed size of the canvas
+        const displayWidth = rect.width;
+        const displayHeight = rect.height;
+        
+        // Get the actual canvas internal dimensions
+        const canvasWidth = this.canvas.width;
+        const canvasHeight = this.canvas.height;
+        
+        // Calculate the scale factors
+        const scaleX = canvasWidth / displayWidth;
+        const scaleY = canvasHeight / displayHeight;
+        
+        // Calculate raw position relative to canvas display area
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
+        
+        // Debug logging (remove in production)
+        if (Math.random() < 0.01) { // Log occasionally to avoid spam
+            console.log(`Canvas: ${canvasWidth}x${canvasHeight}, Display: ${displayWidth.toFixed(1)}x${displayHeight.toFixed(1)}, Scale: ${scaleX.toFixed(2)}x${scaleY.toFixed(2)}, Pos: ${x.toFixed(1)},${y.toFixed(1)}`);
+        }
+        
+        return new Vector2(x, y);
     }
 
     startDrawing(e) {
